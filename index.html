@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FleetShift Pro - Ultimate Responsive Logistics Console</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --fleet-bg: #f8fafc;            
+            --fleet-surface: #ffffff;       
+            --fleet-surface-muted: #f1f5f9; 
+            --primary-navy: #0f172a;        
+            --accent-orange: #ea580c;       
+            --accent-orange-dim: rgba(234, 88, 12, 0.08);
+            --text-main: #334155;           
+            --text-dark: #0f172a;           
+            --border-color: #e2e8f0;        
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Space Grotesk', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--fleet-bg);
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            scroll-behavior: smooth;
+            overflow-x: hidden; /* Prevent any accidental outer leakage */
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-family: var(--font-display);
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        .text-important { color: var(--text-dark) !important; font-weight: 600; }
+        .text-premium-muted { color: #64748b !important; }
+
+        /* Premium Enterprise Navbar */
+        .fleet-navbar {
+            background-color: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+        }
+        .navbar-brand { font-size: 1.4rem; font-weight: 800; color: var(--primary-navy) !important; }
+        .navbar-brand span { color: var(--accent-orange); }
+        
+        .fleet-nav-link {
+            color: var(--text-main) !important;
+            font-size: 0.9rem; font-weight: 600;
+            padding: 10px 14px !important; border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .fleet-nav-link:hover, .fleet-nav-link.active {
+            color: var(--accent-orange) !important;
+            background-color: var(--accent-orange-dim);
+        }
+
+        /* Responsive Fluid Hero Section */
+        .fleet-hero-space {
+            padding: 120px 0 60px 0;
+            background: radial-gradient(circle at 85% 25%, rgba(234, 88, 12, 0.06) 0%, transparent 60%), #ffffff;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .hero-img-stack { position: relative; height: 320px; width: 100%; max-width: 480px; margin: 0 auto; }
+        .hero-img-main {
+            width: 85%; height: 260px; object-fit: cover; border-radius: 20px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+        }
+        .hero-img-secondary {
+            position: absolute; bottom: 10px; right: 0;
+            width: 50%; height: 150px; object-fit: cover; border-radius: 16px;
+            border: 6px solid #ffffff; box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15);
+        }
+
+        /* Metric Analytics Cards */
+        .metric-card {
+            background-color: var(--fleet-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 20px;
+            position: relative; overflow: hidden;
+            height: 100%;
+        }
+        .metric-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%;
+            background-color: var(--primary-navy);
+        }
+        .metric-card.alert-metric::before { background-color: var(--accent-orange); }
+
+        /* UI Buttons & Controls */
+        .btn-fleet-primary {
+            background-color: var(--primary-navy); color: #ffffff !important;
+            font-weight: 600; font-size: 0.9rem; padding: 12px 22px;
+            border-radius: 8px; border: none; transition: all 0.2s ease;
+        }
+        .btn-fleet-primary:hover {
+            background-color: #1e293b;
+            box-shadow: 0 6px 15px rgba(15, 23, 42, 0.1);
+        }
+        .btn-filter {
+            background-color: var(--fleet-surface); border: 1px solid var(--border-color);
+            color: var(--text-main); font-size: 0.85rem; font-weight: 600;
+            padding: 8px 16px; border-radius: 8px; flex: 1; text-align: center;
+        }
+        .btn-filter.active, .btn-filter:hover {
+            background-color: var(--primary-navy); color: #ffffff !important; border-color: var(--primary-navy);
+        }
+        .btn-purchase {
+            background-color: #22c55e; color: #ffffff !important; font-weight: 600;
+            border: none; border-radius: 6px; padding: 8px 14px; font-size: 0.85rem;
+            width: 100%; transition: background 0.2s;
+        }
+        .btn-purchase:hover { background-color: #16a34a; }
+
+        .fleet-input, .fleet-select {
+            background-color: #ffffff !important; border: 1px solid var(--border-color) !important;
+            color: var(--text-dark) !important; padding: 11px; border-radius: 8px;
+        }
+
+        /* Status Pills */
+        .status-pill {
+            padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .status-on-trip { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-standby { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+
+        /* THE RESPONSIVE MATRIX SOLUTION (Anti-Tana/Anti-Scroll Engine) */
+        .table-panel-holder {
+            background-color: var(--fleet-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+        }
+
+        /* Desktop Mode Setup */
+        @media (min-width: 992px) {
+            .fleet-data-table { width: 100%; margin: 0; }
+            .fleet-data-table th {
+                background-color: var(--fleet-surface-muted); color: var(--text-dark);
+                font-weight: 700; font-size: 0.8rem; text-transform: uppercase;
+                letter-spacing: 0.04em; padding: 14px 16px; border-bottom: 2px solid var(--border-color);
+            }
+            .fleet-data-table td {
+                padding: 14px 16px; vertical-align: middle;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .action-box { display: flex; flex-column: row; gap: 6px; }
+            .btn-purchase { width: auto; }
+        }
+
+        /* Mobile & Tablet Mode Setup (Destroys Row Layout -> Transforms to Clean Vertical Stack Cards) */
+        @media (max-width: 991.98px) {
+            .fleet-hero-space { padding: 100px 0 40px 0; text-align: center; }
+            .hero-img-stack { margin-top: 30px; height: 260px; }
+            .hero-img-main { height: 200px; }
+            .hero-img-secondary { height: 110px; }
+
+            .fleet-navbar .navbar-collapse {
+                background: #ffffff; padding: 15px; border-radius: 10px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.05); margin-top: 10px;
+            }
+
+            /* Table to Card Transition */
+            .fleet-data-table, .fleet-data-table thead, .fleet-data-table tbody, .fleet-data-table th, .fleet-data-table td, .fleet-data-table tr { 
+                display: block; 
+                width: 100% !important;
+            }
+            .fleet-data-table thead { display: none; } /* Hide headers on mobile */
+            
+            .fleet-data-table tr {
+                margin-bottom: 15px;
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                padding: 12px;
+                background-color: #ffffff;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+            }
+
+            .fleet-data-table td {
+                text-align: left;
+                padding: 8px 4px;
+                border: none;
+                border-bottom: 1px dashed #f1f5f9;
+                white-space: normal !important; /* Allow text wrapping on mobile */
+            }
+            .fleet-data-table td:last-child { border-bottom: none; }
+
+            /* Inject CSS Labels for Context Awareness */
+            .fleet-data-table td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: 700;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                color: #64748b;
+                width: 45%;
+                padding-right: 10px;
+            }
+            
+            /* Alignment Fixes for Mobile Details Data */
+            .fleet-data-table td > * {
+                display: inline-block;
+                max-width: 50%;
+                vertical-align: top;
+            }
+            .fleet-data-table td .btn, .fleet-data-table td .badge, .fleet-data-table td .status-pill {
+                display: inline-flex;
+                max-width: 100%;
+            }
+            .fleet-data-table td .d-flex {
+                display: flex !important;
+                max-width: 100%;
+                flex-direction: column;
+                gap: 8px !important;
+            }
+        }
+
+        /* Heavy Enterprise Footer Architecture */
+        .fleet-heavy-footer {
+            background-color: var(--primary-navy); color: #94a3b8;
+            padding: 50px 0 25px 0; border-top: 5px solid var(--accent-orange);
+        }
+        .footer-title { font-family: var(--font-display); color: #ffffff; font-weight: 700; margin-bottom: 15px; font-size: 1.1rem; }
+        .footer-link-item { color: #94a3b8; text-decoration: none; transition: all 0.2s ease; display: inline-block; margin-bottom: 10px; }
+        .footer-link-item:hover { color: var(--accent-orange); transform: translateX(3px); }
+        #footer-map-frame { height: 180px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; }
+        .social-node-link {
+            width: 38px; height: 38px; border-radius: 8px; background-color: rgba(255, 255, 255, 0.05);
+            display: inline-flex; align-items: center; justify-content: center; color: #ffffff; text-decoration: none;
+        }
+        .social-node-link:hover { background-color: var(--accent-orange); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light fleet-navbar fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#dashboard"><i class="fa-solid fa-steering-wheel text-warning me-2"></i>Fleet<span>Shift</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#fleetNavMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="fleetNavMain">
+                <ul class="navbar-nav ms-auto gap-1">
+                    <li class="nav-item"><a class="nav-link fleet-nav-link active" href="#dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link fleet-nav-link" href="#roster">Chauffeurs</a></li>
+                    <li class="nav-item"><a class="nav-link fleet-nav-link" href="#fuel-ledger">Fuel Logs</a></li>
+                    <li class="nav-item"><a class="nav-link fleet-nav-link" href="#maintenance-panel">Maintenance</a></li>
+                    <li class="nav-item"><a class="nav-link fleet-nav-link" href="#calculator">Incentives</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="fleet-hero-space">
+        <div class="container">
+            <div class="row align-items-center g-4 g-lg-5">
+                <div class="col-lg-6">
+                    <h1 class="display-6 fw-bold text-dark mb-3">Enterprise Telemetry Logistics Core</h1>
+                    <p class="text-premium-muted fs-6 mb-4">An advanced multi-dimensional lifecycle workspace managing real-time shift scheduling assignments, fuel metrics, and automated dynamic disbursements.</p>
+                    <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center justify-content-lg-start">
+                        <button class="btn btn-fleet-primary" data-bs-toggle="modal" data-bs-target="#dispatchModal">
+                            <i class="fa-solid fa-paper-plane me-2"></i>Initialize Dispatch
+                        </button>
+                        <button class="btn btn-outline-secondary text-dark bg-white fw-semibold" onclick="exportMasterLedgerToCSV()">
+                            <i class="fa-solid fa-file-export me-2"></i>Export Audit (.csv)
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-img-stack">
+                        <img src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80" class="hero-img-main" alt="Car">
+                        <img src="https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=600&q=80" class="hero-img-secondary" alt="Wheel">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="dashboard" class="py-4">
+        <div class="container">
+            
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-2">
+                <h5 class="m-0 text-dark text-uppercase tracking-wider">Live System Telemetry Snapshot</h5>
+                <button class="btn btn-sm btn-light border text-dark font-monospace fw-bold" onclick="recalculateAllMetricAggregates()"><i class="fa-solid fa-rotate me-1"></i> Force Refresh</button>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-sm-6">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-premium-muted small fw-bold d-block mb-1">ACTIVE COHORT</span>
+                                <h4 class="text-important fw-bold mb-0" id="stat-total-drivers">3 Drivers</h4>
+                            </div>
+                            <div class="p-2 bg-light rounded text-dark"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="metric-card alert-metric">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-premium-muted small fw-bold d-block mb-1">ON TRIP NODES</span>
+                                <h4 class="text-important fw-bold mb-0 text-primary" id="stat-on-trip">2 Nodes</h4>
+                            </div>
+                            <div class="p-2 bg-light rounded text-primary"><i class="fa-solid fa-route"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-premium-muted small fw-bold d-block mb-1">FUEL CONSUMED</span>
+                                <h4 class="text-important fw-bold mb-0 text-danger" id="stat-fuel-burned">132 Liters</h4>
+                            </div>
+                            <div class="p-2 bg-light rounded text-danger"><i class="fa-solid fa-gas-pump"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-premium-muted small fw-bold d-block mb-1">BONUS RECOGNIZED</span>
+                                <h4 class="text-important fw-bold mb-0 text-success" id="stat-bonus-pool">$4,850.00</h4>
+                            </div>
+                            <div class="p-2 bg-light rounded text-success"><i class="fa-solid fa-wallet"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="roster" class="pt-2 mb-4">
+                <div class="row align-items-center mb-3 g-3">
+                    <div class="col-12 col-xl-4">
+                        <h3 class="mb-1">Chauffeur Registry Matrix</h3>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                            <input type="text" id="globalSearchInput" class="form-control fleet-input border-start-0" placeholder="Search names, vehicles..." onkeyup="executeGlobalSearchLedger()">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="d-flex gap-1 bg-white p-1 rounded border">
+                            <button class="btn btn-filter active" onclick="filterChauffeurGrid('All', this)">All</button>
+                            <button class="btn btn-filter" onclick="filterChauffeurGrid('On-Trip', this)">On-Trip</button>
+                            <button class="btn btn-filter" onclick="filterChauffeurGrid('Standby', this)">Standby</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-panel-holder p-1 p-lg-0">
+                    <table class="table fleet-data-table" id="rosterLedgerTable">
+                        <thead>
+                            <tr>
+                                <th>Chauffeur Specs</th>
+                                <th>Vehicle Params</th>
+                                <th>Shift Setup</th>
+                                <th>Geolocation</th>
+                                <th>Trips Log</th>
+                                <th>UX Rating</th>
+                                <th>State</th>
+                                <th class="text-center">System Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-state="On-Trip">
+                                <td data-label="Chauffeur Specs">
+                                    <span class="text-important d-block font-name-target">Zayan Chowdhury</span>
+                                    <small class="text-premium-muted font-monospace">EMP-88211</small>
+                                </td>
+                                <td data-label="Vehicle Params" class="text-important">Audi A6 Sedan<small class="text-premium-muted d-block font-monospace">GA-45-2210</small></td>
+                                <td data-label="Shift Setup">
+                                    <span class="badge bg-dark mb-1">Morning Duty</span>
+                                    <small class="text-premium-muted d-block font-monospace">OT: 2.5 hrs</small>
+                                </td>
+                                <td data-label="Geolocation">
+                                    <span class="text-important font-monospace d-block" id="geo-88211">Lat: 23.794, Long: 90.404</span>
+                                    <button class="btn btn-sm btn-link p-0 text-accent small" onclick="simulateLiveGPSCoordinateChange('88211')"><i class="fa-solid fa-location-crosshairs text-danger me-1"></i> Move</button>
+                                </td>
+                                <td data-label="Trips Log" class="fw-bold text-dark font-trips-target">16 Complete</td>
+                                <td data-label="UX Rating"><span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>4.9</span></td>
+                                <td data-label="State"><span class="status-pill status-on-trip"><i class="fa-solid fa-circle-notch fa-spin me-1"></i> On-Trip</span></td>
+                                <td data-label="System Actions" class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <button class="btn btn-sm btn-outline-secondary py-1 text-dark text-nowrap" onclick="triggerBonusCalculation('Zayan Chowdhury', 16)"><i class="fa-solid fa-wallet me-1"></i> Incentives</button>
+                                        <button class="btn btn-purchase text-nowrap" onclick="executePurchaseTripAllocation('Zayan Chowdhury', 'Audi A6 Luxury Sedan')"><i class="fa-solid fa-receipt me-1"></i> Purchase Trip</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-state="Standby">
+                                <td data-label="Chauffeur Specs">
+                                    <span class="text-important d-block font-name-target">Nabil Ahmed</span>
+                                    <small class="text-premium-muted font-monospace">EMP-11202</small>
+                                </td>
+                                <td data-label="Vehicle Params" class="text-important">Toyota Noah <small class="text-premium-muted d-block font-monospace">CHA-15-4431</small></td>
+                                <td data-label="Shift Setup">
+                                    <span class="badge bg-dark mb-1">Evening Duty</span>
+                                    <small class="text-premium-muted d-block font-monospace">OT: 0.0 hrs</small>
+                                </td>
+                                <td data-label="Geolocation"><span class="text-muted font-monospace">Stationary Base</span></td>
+                                <td data-label="Trips Log" class="fw-bold text-dark font-trips-target">24 Complete</td>
+                                <td data-label="UX Rating"><span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>4.8</span></td>
+                                <td data-label="State"><span class="status-pill status-standby"><i class="fa-solid fa-circle-check me-1"></i> Standby</span></td>
+                                <td data-label="System Actions" class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <button class="btn btn-sm btn-outline-secondary py-1 text-dark text-nowrap" onclick="triggerBonusCalculation('Nabil Ahmed', 24)"><i class="fa-solid fa-wallet me-1"></i> Incentives</button>
+                                        <button class="btn btn-purchase text-nowrap" onclick="executePurchaseTripAllocation('Nabil Ahmed', 'Toyota Noah Microbus')"><i class="fa-solid fa-receipt me-1"></i> Purchase Trip</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-state="On-Trip">
+                                <td data-label="Chauffeur Specs">
+                                    <span class="text-important d-block font-name-target">Rahat Kabir</span>
+                                    <small class="text-premium-muted font-monospace">EMP-33412</small>
+                                </td>
+                                <td data-label="Vehicle Params" class="text-important">BMW 5 Series <small class="text-premium-muted d-block font-monospace">G-22-8091</small></td>
+                                <td data-label="Shift Setup">
+                                    <span class="badge bg-dark mb-1">Night Duty</span>
+                                    <small class="text-premium-muted d-block font-monospace">OT: 4.0 hrs</small>
+                                </td>
+                                <td data-label="Geolocation">
+                                    <span class="text-important font-monospace d-block" id="geo-33412">Lat: 23.728, Long: 90.410</span>
+                                    <button class="btn btn-sm btn-link p-0 text-accent small" onclick="simulateLiveGPSCoordinateChange('33412')"><i class="fa-solid fa-location-crosshairs text-danger me-1"></i> Move</button>
+                                </td>
+                                <td data-label="Trips Log" class="fw-bold text-dark font-trips-target">9 Complete</td>
+                                <td data-label="UX Rating"><span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>4.6</span></td>
+                                <td data-label="State"><span class="status-pill status-on-trip"><i class="fa-solid fa-circle-notch fa-spin me-1"></i> On-Trip</span></td>
+                                <td data-label="System Actions" class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <button class="btn btn-sm btn-outline-secondary py-1 text-dark text-nowrap" onclick="triggerBonusCalculation('Rahat Kabir', 9)"><i class="fa-solid fa-wallet me-1"></i> Incentives</button>
+                                        <button class="btn btn-purchase text-nowrap" onclick="executePurchaseTripAllocation('Rahat Kabir', 'BMW 5 Series Executive')"><i class="fa-solid fa-receipt me-1"></i> Purchase Trip</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="fuel-ledger" class="pt-2 mb-4">
+                <div class="p-3 p-lg-4 rounded-4 bg-white border">
+                    <div class="d-flex flex-column sm-row justify-content-between align-items-start sm-center mb-3 gap-3">
+                        <div>
+                            <h4 class="m-0 fs-5"><i class="fa-solid fa-gas-pump text-warning me-2"></i>Fuel Slip Allocation Ledger</h4>
+                        </div>
+                        <button class="btn btn-sm btn-dark w-100 sm-auto" data-bs-toggle="modal" data-bs-target="#fuelLogModal"><i class="fa-solid fa-plus me-1"></i> Log Fuel Input</button>
+                    </div>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-sm align-middle mb-0" id="fuelTrackingTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Vehicle Spec</th>
+                                    <th>Chauffeur Node</th>
+                                    <th>Volume (L)</th>
+                                    <th>Distance (KM)</th>
+                                    <th>Economy Rate</th>
+                                    <th>Cost ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Audi A6 Luxury Sedan</td>
+                                    <td>Zayan Chowdhury</td>
+                                    <td class="fw-bold">45 L</td>
+                                    <td>360 KM</td>
+                                    <td><span class="badge bg-success">8.0 KM/L</span></td>
+                                    <td class="text-important fw-bold">$54.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Toyota Noah Microbus</td>
+                                    <td>Nabil Ahmed</td>
+                                    <td class="fw-bold">52 L</td>
+                                    <td>494 KM</td>
+                                    <td><span class="badge bg-success">9.5 KM/L</span></td>
+                                    <td class="text-important fw-bold">$62.40</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="maintenance-panel" class="pt-2 mb-4">
+                <h4 class="mb-3 fs-5"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>Fleet Health Warnings</h4>
+                <div class="row g-3" id="maintenanceAlertRow">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-3 rounded-4 bg-white border">
+                            <h6 class="text-important mb-1">Audi A6 [GA-45-2210]</h6>
+                            <p class="text-premium-muted small font-monospace mb-2">Engine Oil Integrity Status</p>
+                            <div class="progress mb-1" style="height: 6px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 82%"></div>
+                            </div>
+                            <small class="text-important font-monospace">82% Remaining</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-3 rounded-4 bg-white border border-danger" style="background-color: #fff5f5;">
+                            <h6 class="text-important mb-1 text-danger">Toyota Noah [CHA-15-4431]</h6>
+                            <p class="text-premium-muted small font-monospace mb-2">Brake Pad Calibration</p>
+                            <div class="progress mb-1" style="height: 6px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 14%"></div>
+                            </div>
+                            <small class="text-danger font-monospace fw-bold">14% Critical Wear Alert</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="calculator" class="pt-2">
+                <div class="row g-3">
+                    <div class="col-lg-5">
+                        <div class="p-3 p-lg-4 rounded-4 bg-white border">
+                            <h4 class="fs-5 mb-2"><i class="fa-solid fa-calculator text-warning me-2"></i>Pay Matrix Processor</h4>
+                            <div class="mb-3">
+                                <label class="form-label text-important small">Target Chauffeur</label>
+                                <input type="text" id="calcDriverName" class="form-control fleet-input" readonly placeholder="Select chauffeur from top ledger mapping">
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label text-important small">Total Trips</label>
+                                    <input type="number" id="calcTripCount" class="form-control fleet-input" readonly placeholder="0">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-important small">OT Hours</label>
+                                    <input type="number" id="calcOvertimeHours" class="form-control fleet-input" value="2.5">
+                                </div>
+                            </div>
+                            <button class="btn btn-fleet-primary w-100 py-2.5" onclick="executeAlgorithmicBonusCalculationPipeline()">Calculate Distribution Matrix</button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-7">
+                        <div class="p-3 p-lg-4 rounded-4 bg-white border d-flex flex-column justify-content-between" style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);">
+                            <div>
+                                <h4 class="fs-5">Distribution Parameters Metrics</h4>
+                                <div class="row g-2 mt-2">
+                                    <div class="col-sm-6">
+                                        <div class="p-2 bg-white border rounded text-center">
+                                            <span class="text-premium-muted small d-block">Personnel Target</span>
+                                            <strong id="out-driver-name">---</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="p-2 bg-white border rounded text-center">
+                                            <span class="text-premium-muted small d-block">Performance Tier</span>
+                                            <strong id="out-tier-level">---</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-3 border-top mt-3">
+                                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                                    <div>
+                                        <span class="text-premium-muted small d-block">Total Gross Pay Allocation</span>
+                                        <h3 class="text-success mb-0 fw-bold" id="out-total-bonus">$0.00</h3>
+                                    </div>
+                                    <button class="btn btn-fleet-primary w-100 w-sm-auto" style="background-color: #047857;" onclick="commitCalculatedIncentiveToMasterPool()">Approve and Release</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="modal fade" id="dispatchModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-steering-wheel text-warning me-2"></i>New Dispatch Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="fleetDispatchForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Chauffeur Legal Name</label>
+                            <input type="text" id="formDriverName" class="form-control fleet-input" placeholder="e.g. Asif Iqbal" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Assigned Fleet Vehicle Spec</label>
+                            <input type="text" id="formVehicle" class="form-control fleet-input" placeholder="e.g. Mercedes E-Class" required>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6 mb-3">
+                                <label class="form-label small fw-bold text-muted">Rostered Shift</label>
+                                <select id="formShift" class="form-select fleet-select">
+                                    <option value="Morning (06:00 - 14:00)">Morning</option>
+                                    <option value="Evening (14:00 - 22:00)">Evening</option>
+                                    <option value="Night (22:00 - 06:00)">Night</option>
+                                </select>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label small fw-bold text-muted">Trips Completed</label>
+                                <input type="number" id="formTrips" class="form-control fleet-input" placeholder="5" required>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-muted">Core Operational Status</label>
+                            <select id="formStatus" class="form-select fleet-select">
+                                <option value="On-Trip">On-Trip Active</option>
+                                <option value="Standby">Base Standby</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Abstain</button>
+                        <button type="submit" class="btn btn-fleet-primary">Commit Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="fuelLogModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-gas-pump text-warning me-2"></i>Log Fuel Invoice Slip</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="fuelSlipLoggingForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Vehicle Name</label>
+                            <input type="text" id="fuelFormVehicle" class="form-control fleet-input" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Chauffeur Node Operator</label>
+                            <input type="text" id="fuelFormDriver" class="form-control fleet-input" required>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted">Volume (Liters)</label>
+                                <input type="number" id="fuelFormLiters" class="form-control fleet-input" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted">Distance Covered (KM)</label>
+                                <input type="number" id="fuelFormKM" class="form-control fleet-input" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-fleet-primary w-100">Inject Fuel Slip</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer id="footer-hub" class="fleet-heavy-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4 col-12">
+                    <h4 class="text-white mb-2">FleetShift Core</h4>
+                    <p class="small text-white mb-3">A mission-critical fleet telemetry monitoring workspace and driver roster coordination framework node hub.</p>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="social-node-link"><i class="fa-brands fa-github"></i></a>
+                        <a href="#" class="social-node-link"><i class="fa-brands fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <h5 class="footer-title">HQ Location</h5>
+                    <p class="small text-white m-0"><i class="fa-solid fa-location-dot me-2 text-warning"></i> Plot 45, Road 11, Banani C/A, Dhaka, Bangladesh</p>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <h5 class="footer-title">Telemetry Anchor Map</h5>
+                    <div id="footer-map-frame"></div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-top border-secondary text-center font-monospace" style="font-size: 0.75rem;">
+                <p class="m-0">&copy; 2026 FleetShift Logistics Corp. 100% Fluid Fluid View Active.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let masterStateBonusDistributedPool = 4850.00;
+        let algorithmicTargetLiabilityComputation = 0;
+
+        function recalculateAllMetricAggregates() {
+            const tableRowItems = document.querySelectorAll('#rosterLedgerTable tbody tr');
+            document.getElementById('stat-total-drivers').textContent = `${tableRowItems.length} Chauffeurs`;
+            
+            let activeNodesCount = 0;
+            tableRowItems.forEach(row => {
+                if(row.getAttribute('data-state') === 'On-Trip' && row.style.display !== 'none') activeNodesCount++;
+            });
+            document.getElementById('stat-on-trip').textContent = `${activeNodesCount} Active Nodes`;
+
+            let accumulatedLiters = 0;
+            document.querySelectorAll('#fuelTrackingTable tbody tr').forEach(fRow => {
+                accumulatedLiters += parseFloat(fRow.querySelector('td:nth-child(3)').textContent) || 0;
+            });
+            document.getElementById('stat-fuel-burned').textContent = `${accumulatedLiters} Liters`;
+            document.getElementById('stat-bonus-pool').textContent = `$${masterStateBonusDistributedPool.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        }
+
+        function filterChauffeurGrid(filterTag, actionBtnHost) {
+            actionBtnHost.parentElement.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+            actionBtnHost.classList.add('active');
+
+            document.querySelectorAll('#rosterLedgerTable tbody tr').forEach(row => {
+                if(filterTag === 'All' || row.getAttribute('data-state') === filterTag) {
+                    row.style.setProperty('display', 'block', 'important');
+                    if(window.innerWidth >= 992) row.style.setProperty('display', 'table-row', 'important');
+                } else {
+                    row.style.setProperty('display', 'none', 'important');
+                }
+            });
+            recalculateAllMetricAggregates();
+        }
+
+        function executeGlobalSearchLedger() {
+            const keyword = document.getElementById('globalSearchInput').value.toLowerCase();
+            document.querySelectorAll('#rosterLedgerTable tbody tr').forEach(row => {
+                if(row.textContent.toLowerCase().includes(keyword)) {
+                    row.style.setProperty('display', 'block', 'important');
+                    if(window.innerWidth >= 992) row.style.setProperty('display', 'table-row', 'important');
+                } else {
+                    row.style.setProperty('display', 'none', 'important');
+                }
+            });
+            recalculateAllMetricAggregates();
+        }
+
+        function simulateLiveGPSCoordinateChange(employeeUUID) {
+            const geoContainerNode = document.getElementById(`geo-${employeeUUID}`);
+            if(geoContainerNode) {
+                geoContainerNode.textContent = `Lat: ${(23.7 + Math.random() * 0.1).toFixed(4)}, Long: ${(90.4 + Math.random() * 0.1).toFixed(4)}`;
+            }
+        }
+
+        function executePurchaseTripAllocation(chauffeurName, vehicleName) {
+            alert(`Trip Purchase Confirmed!\nAssignee Node: ${chauffeurName}\nAsset Bound: ${vehicleName}\n\nManifest routed safely downstream.`);
+        }
+
+        function triggerBonusCalculation(driverNameParam, totalTripsParam) {
+            document.getElementById('calcDriverName').value = driverNameParam;
+            document.getElementById('calcTripCount').value = totalTripsParam;
+            document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function executeAlgorithmicBonusCalculationPipeline() {
+            const name = document.getElementById('calcDriverName').value;
+            const trips = parseInt(document.getElementById('calcTripCount').value) || 0;
+            const ot = parseFloat(document.getElementById('calcOvertimeHours').value) || 0;
+
+            if(!name) { alert("Map an active chauffeur node entry row context target parameter link first."); return; }
+
+            let total = (trips * 50) + (ot * 40);
+            let tier = 'Standard Base Bracket';
+            if(trips > 15) { total += 400; tier = 'Elite Masterclass Bracket'; }
+
+            algorithmicTargetLiabilityComputation = total;
+            document.getElementById('out-driver-name').textContent = name;
+            document.getElementById('out-tier-level').textContent = tier;
+            document.getElementById('out-total-bonus').textContent = `$${total.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        }
+
+        function commitCalculatedIncentiveToMasterPool() {
+            if(algorithmicTargetLiabilityComputation === 0) { alert("Execute active calculation pipeline array thread block first."); return; }
+            if(confirm("Release financial allocations downstream to master register array ledger?")) {
+                masterStateBonusDistributedPool += algorithmicTargetLiabilityComputation;
+                recalculateAllMetricAggregates();
+                document.getElementById('out-driver-name').textContent = '---';
+                document.getElementById('out-tier-level').textContent = '---';
+                document.getElementById('out-total-bonus').textContent = '$0.00';
+                document.getElementById('calcDriverName').value = '';
+                document.getElementById('calcTripCount').value = '';
+                algorithmicTargetLiabilityComputation = 0;
+            }
+        }
+
+        document.getElementById('fleetDispatchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const dName = document.getElementById('formDriverName').value;
+            const dVehicle = document.getElementById('formVehicle').value;
+            const dShift = document.getElementById('formShift').value;
+            const dTrips = document.getElementById('formTrips').value;
+            const dStatus = document.getElementById('formStatus').value;
+            const randomUUID = 'EMP-' + Math.floor(10000 + Math.random() * 90000);
+
+            const newlyFormedRow = document.createElement('tr');
+            newlyFormedRow.setAttribute('data-state', dStatus);
+
+            let statusMarkup = dStatus === 'On-Trip' ? `<span class="status-pill status-on-trip"><i class="fa-solid fa-circle-notch fa-spin me-1"></i> On-Trip</span>` : `<span class="status-pill status-standby"><i class="fa-solid fa-circle-check me-1"></i> Standby</span>`;
+            let geoMarkup = dStatus === 'On-Trip' ? `<span class="text-important font-monospace d-block" id="geo-${randomUUID}">Lat: 23.754, Long: 90.392</span><button class="btn btn-sm btn-link p-0 text-accent small" onclick="simulateLiveGPSCoordinateChange('${randomUUID}')">Move</button>` : `<span class="text-muted font-monospace">Stationary Base</span>`;
+
+            newlyFormedRow.innerHTML = `
+                <td data-label="Chauffeur Specs">
+                    <span class="text-important d-block font-name-target">${dName}</span>
+                    <small class="text-premium-muted font-monospace">${randomUUID}</small>
+                </td>
+                <td data-label="Vehicle Params" class="text-important">${dVehicle}</td>
+                <td data-label="Shift Setup">
+                    <span class="badge bg-dark mb-1">${dShift}</span>
+                    <small class="text-premium-muted d-block font-monospace">OT: 0.0 hrs</small>
+                </td>
+                <td data-label="Geolocation">${geoMarkup}</td>
+                <td data-label="Trips Log" class="fw-bold text-dark font-trips-target">${dTrips} Complete</td>
+                <td data-label="UX Rating"><span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>5.0</span></td>
+                <td data-label="State">${statusMarkup}</td>
+                <td data-label="System Actions" class="text-center">
+                    <div class="d-flex gap-1 justify-content-center">
+                        <button class="btn btn-sm btn-outline-secondary py-1 text-dark text-nowrap" onclick="triggerBonusCalculation('${dName}', ${dTrips})"><i class="fa-solid fa-wallet me-1"></i> Incentives</button>
+                        <button class="btn btn-purchase text-nowrap" onclick="executePurchaseTripAllocation('${dName}', '${dVehicle}')"><i class="fa-solid fa-receipt me-1"></i> Purchase Trip</button>
+                    </div>
+                </td>
+            `;
+
+            document.querySelector('#rosterLedgerTable tbody').appendChild(newlyFormedRow);
+            recalculateAllMetricAggregates();
+            
+            // Adjust layouts adaptively on creation
+            if(window.innerWidth < 992) newlyFormedRow.style.setProperty('display', 'block', 'important');
+            
+            document.getElementById('fleetDispatchForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('dispatchModal')).hide();
+        });
+
+        document.getElementById('fuelSlipLoggingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fVehicle = document.getElementById('fuelFormVehicle').value;
+            const fDriver = document.getElementById('fuelFormDriver').value;
+            const fLiters = parseFloat(document.getElementById('fuelFormLiters').value);
+            const fKM = parseFloat(document.getElementById('fuelFormKM').value);
+
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${fVehicle}</td><td>${fDriver}</td><td class="fw-bold">${fLiters} L</td><td>${fKM} KM</td><td><span class="badge bg-success">${(fKM/fLiters).toFixed(1)} KM/L</span></td><td class="text-important fw-bold">$${(fLiters*1.22).toFixed(2)}</td>`;
+            document.querySelector('#fuelTrackingTable tbody').appendChild(row);
+            recalculateAllMetricAggregates();
+            document.getElementById('fuelSlipLoggingForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('fuelLogModal')).hide();
+        });
+
+        function exportMasterLedgerToCSV() {
+            let csv = 'Chauffeur Name,ID,Assigned Vehicle,Completed Trips\n';
+            document.querySelectorAll('#rosterLedgerTable tbody tr').forEach(row => {
+                if(row.style.display !== 'none') {
+                    csv += `"${row.querySelector('.font-name-target').textContent}","${row.querySelector('.font-monospace').textContent}","${row.querySelector('td:nth-child(2)').childNodes[0].textContent.trim()}","${row.querySelector('.font-trips-target').textContent}"\n`;
+                }
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'FleetShift_Audit_Ledger.csv');
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        window.onload = function() {
+            recalculateAllMetricAggregates();
+            const map = L.map('footer-map-frame', { zoomControl: false }).setView([23.7940, 90.4043], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.marker([23.7940, 90.4043]).addTo(map).bindPopup('FleetShift Logistics Control HQ').openPopup();
+        };
+
+        // Screen Resize Node Adjuster Event Listener
+        window.addEventListener('resize', function() {
+            document.querySelectorAll('#rosterLedgerTable tbody tr').forEach(row => {
+                if(row.style.display !== 'none') {
+                    if(window.innerWidth >= 992) {
+                        row.style.setProperty('display', 'table-row', 'important');
+                    } else {
+                        row.style.setProperty('display', 'block', 'important');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
